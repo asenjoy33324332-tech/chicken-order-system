@@ -1,0 +1,45 @@
+{
+  "family": "order-system-worker-staging",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "1024",
+  "memory": "2048",
+  "executionRoleArn": "arn:aws:iam::ACCOUNT_ID:role/order-system-staging-ExecutionRole",
+  "taskRoleArn":      "arn:aws:iam::ACCOUNT_ID:role/order-system-staging-TaskRole",
+  "containerDefinitions": [
+    {
+      "name": "worker",
+      "image": "ACCOUNT_ID.dkr.ecr.REGION.amazonaws.com/chicken-order-system:staging",
+      "essential": true,
+      "environment": [
+        { "name": "APP_MODE",              "value": "worker" },
+        { "name": "NODE_ENV",              "value": "production" },
+        { "name": "DATABASE_NAME",         "value": "orderdb" },
+        { "name": "DB_POOL_MAX",           "value": "20" },
+        { "name": "WORKER_CONCURRENCY",    "value": "20" },
+        { "name": "WORKER_RATE_LIMIT",     "value": "100" },
+        { "name": "CB_FAILURE_THRESHOLD",  "value": "5" },
+        { "name": "CB_OPEN_DURATION_MS",   "value": "30000" },
+        { "name": "MAX_RETRY_ATTEMPTS",    "value": "3" },
+        { "name": "RETRY_BASE_DELAY_MS",   "value": "1000" },
+        { "name": "LOCK_TTL_SECONDS",      "value": "60" },
+        { "name": "IDEMPOTENCY_TTL_SECONDS", "value": "86400" }
+      ],
+      "secrets": [
+        { "name": "DATABASE_HOST",     "valueFrom": "/order-system/staging/db:host::" },
+        { "name": "DATABASE_PORT",     "valueFrom": "/order-system/staging/db:port::" },
+        { "name": "DATABASE_USER",     "valueFrom": "/order-system/staging/db:username::" },
+        { "name": "DATABASE_PASSWORD", "valueFrom": "/order-system/staging/db:password::" },
+        { "name": "REDIS_HOST",        "valueFrom": "/order-system/staging/redis:endpoint::" }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group":  "/order-system/staging/worker",
+          "awslogs-region": "ap-northeast-2",
+          "awslogs-stream-prefix": "worker"
+        }
+      }
+    }
+  ]
+}

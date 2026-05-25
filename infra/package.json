@@ -1,0 +1,24 @@
+{
+  "name": "chicken-order-infra",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "build": "tsc",
+    "deploy:staging": "cdk deploy --all --context stage=staging --require-approval never",
+    "deploy:production": "cdk deploy --all --context stage=production",
+    "diff:staging": "cdk diff --all --context stage=staging",
+    "diff:production": "cdk diff --all --context stage=production",
+    "synth": "cdk synth",
+    "destroy:staging": "cdk destroy --all --context stage=staging"
+  },
+  "devDependencies": {
+    "@types/node": "20.x",
+    "aws-cdk": "2.x",
+    "typescript": "~5.5.0"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "2.x",
+    "constructs": "^10.0.0",
+    "source-map-support": "^0.5.21"
+  }
+}

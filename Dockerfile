@@ -9,12 +9,23 @@ FROM node:20-alpine AS runner
 WORKDIR /app
 ENV NODE_ENV=production
 
+# 최소 권한 실행 유저
+RUN addgroup -g 1001 -S nodejs && adduser -S nestjs -u 1001
+
 COPY package*.json ./
-RUN npm ci --only=production
+RUN npm ci --only=production && npm cache clean --force
 
 COPY --from=builder /app/dist ./dist
 
-# Graceful shutdown: ECS는 SIGTERM을 보내므로 70초 대기 (60초 처리 + 10초 여유)
+USER nestjs
+
+# ECS 헬스 체크 (ALB healthcheck와 동일 엔드포인트)
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
+  CMD wget -qO- http://localhost:3000/admin/health || exit 1
+
+EXPOSE 3000
+
+# ECS SIGTERM → Graceful shutdown (main.ts에 SIGTERM 핸들러 구현됨)
 STOPSIGNAL SIGTERM
 
 CMD ["node", "dist/main.js"]

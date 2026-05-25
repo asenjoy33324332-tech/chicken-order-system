@@ -1,0 +1,52 @@
+{
+  "family": "order-system-api-production",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+  "executionRoleArn": "arn:aws:iam::ACCOUNT_ID:role/order-system-production-ExecutionRole",
+  "taskRoleArn":      "arn:aws:iam::ACCOUNT_ID:role/order-system-production-TaskRole",
+  "containerDefinitions": [
+    {
+      "name": "api",
+      "image": "ACCOUNT_ID.dkr.ecr.REGION.amazonaws.com/chicken-order-system:latest",
+      "essential": true,
+      "portMappings": [{ "containerPort": 3000, "protocol": "tcp" }],
+      "environment": [
+        { "name": "APP_MODE",              "value": "api" },
+        { "name": "PORT",                  "value": "3000" },
+        { "name": "NODE_ENV",              "value": "production" },
+        { "name": "DATABASE_NAME",         "value": "orderdb" },
+        { "name": "DB_POOL_MAX",           "value": "30" },
+        { "name": "CB_FAILURE_THRESHOLD",  "value": "5" },
+        { "name": "CB_OPEN_DURATION_MS",   "value": "30000" },
+        { "name": "MAX_RETRY_ATTEMPTS",    "value": "3" },
+        { "name": "RETRY_BASE_DELAY_MS",   "value": "1000" },
+        { "name": "LOCK_TTL_SECONDS",      "value": "60" },
+        { "name": "IDEMPOTENCY_TTL_SECONDS", "value": "86400" }
+      ],
+      "secrets": [
+        { "name": "DATABASE_HOST",     "valueFrom": "/order-system/production/db:host::" },
+        { "name": "DATABASE_PORT",     "valueFrom": "/order-system/production/db:port::" },
+        { "name": "DATABASE_USER",     "valueFrom": "/order-system/production/db:username::" },
+        { "name": "DATABASE_PASSWORD", "valueFrom": "/order-system/production/db:password::" },
+        { "name": "REDIS_HOST",        "valueFrom": "/order-system/production/redis:endpoint::" }
+      ],
+      "healthCheck": {
+        "command": ["CMD-SHELL", "wget -qO- http://localhost:3000/admin/health || exit 1"],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 30
+      },
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group":  "/order-system/production/api",
+          "awslogs-region": "ap-northeast-2",
+          "awslogs-stream-prefix": "api"
+        }
+      }
+    }
+  ]
+}

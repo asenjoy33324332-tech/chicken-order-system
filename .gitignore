@@ -9,3 +9,7 @@ coverage/
 dump.rdb
 .claude/
 *.lnk
+
+# CDK
+infra/node_modules/
+infra/cdk.out/

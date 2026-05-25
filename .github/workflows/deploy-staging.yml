@@ -1,0 +1,90 @@
+name: Deploy — Staging
+
+on:
+  push:
+    branches: [staging]
+
+env:
+  AWS_REGION: ${{ secrets.AWS_REGION }}
+  ECR_REPOSITORY: ${{ secrets.ECR_REPOSITORY }}
+  ECS_CLUSTER: ${{ secrets.ECS_CLUSTER_STAGING }}
+
+jobs:
+  deploy:
+    name: Build → ECR → ECS (staging)
+    runs-on: ubuntu-latest
+    environment: staging
+
+    permissions:
+      id-token: write   # OIDC
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build & push image
+        id: build
+        env:
+          REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          IMAGE_TAG: staging-${{ github.sha }}
+        run: |
+          docker build -t $REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
+                       -t $REGISTRY/$ECR_REPOSITORY:staging \
+                       .
+          docker push $REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $REGISTRY/$ECR_REPOSITORY:staging
+          echo "image=$REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+
+      # ── API 서비스 배포 ────────────────────────────────────────
+      - name: Update ECS API task definition
+        id: api-taskdef
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: infra/task-definitions/api-staging.json
+          container-name: api
+          image: ${{ steps.build.outputs.image }}
+
+      - name: Deploy API to ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.api-taskdef.outputs.task-definition }}
+          service: ${{ secrets.ECS_SERVICE_API_STAGING }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true
+
+      # ── Worker 서비스 배포 ─────────────────────────────────────
+      - name: Update ECS Worker task definition
+        id: worker-taskdef
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: infra/task-definitions/worker-staging.json
+          container-name: worker
+          image: ${{ steps.build.outputs.image }}
+
+      - name: Deploy Worker to ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.worker-taskdef.outputs.task-definition }}
+          service: ${{ secrets.ECS_SERVICE_WORKER_STAGING }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true
+
+      - name: Notify success
+        if: success()
+        run: |
+          echo "✅ Staging 배포 완료: ${{ github.sha }}"
+
+      - name: Notify failure
+        if: failure()
+        run: |
+          echo "❌ Staging 배포 실패: ${{ github.sha }}"
