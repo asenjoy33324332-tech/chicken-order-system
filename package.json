@@ -1,0 +1,51 @@
+{
+  "name": "franchise-order-system",
+  "version": "1.0.0",
+  "description": "차세대 프랜차이즈 통합 주문 시스템",
+  "scripts": {
+    "start:api": "APP_MODE=api nest start --watch",
+    "start:worker": "APP_MODE=worker nest start --watch",
+    "start:all": "APP_MODE=all nest start --watch",
+    "build": "nest build",
+    "migration:run": "ts-node -r tsconfig-paths/register ./node_modules/.bin/typeorm migration:run -d src/database/data-source.ts",
+    "migration:revert": "ts-node -r tsconfig-paths/register ./node_modules/.bin/typeorm migration:revert -d src/database/data-source.ts",
+    "db:init": "psql $DATABASE_URL -f database/migrations/001_initial_schema.sql",
+    "test": "jest",
+    "test:e2e": "jest --config ./test/jest-e2e.json"
+  },
+  "dependencies": {
+    "@nestjs/bullmq": "^10.2.3",
+    "@nestjs/common": "^10.4.22",
+    "@nestjs/config": "^3.3.0",
+    "@nestjs/core": "^10.4.22",
+    "@nestjs/platform-express": "^10.4.22",
+    "@nestjs/typeorm": "^10.0.2",
+    "axios": "^1.6.8",
+    "bullmq": "^5.7.0",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.1",
+    "cockatiel": "^3.1.3",
+    "decimal.js": "^10.4.3",
+    "ioredis": "^5.3.2",
+    "lodash": "^4.18.1",
+    "pg": "^8.11.3",
+    "pino": "^8.19.0",
+    "pino-pretty": "^11.0.0",
+    "reflect-metadata": "^0.1.14",
+    "rxjs": "^7.8.1",
+    "typeorm": "^0.3.20",
+    "uuid": "^9.0.1"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^10.3.0",
+    "@nestjs/testing": "^10.3.0",
+    "@types/express": "^5.0.6",
+    "@types/lodash": "^4.17.24",
+    "@types/node": "^20.11.5",
+    "@types/pg": "^8.10.9",
+    "@types/uuid": "^9.0.7",
+    "ts-node": "^10.9.2",
+    "tsconfig-paths": "^4.2.0",
+    "typescript": "^5.3.3"
+  }
+}

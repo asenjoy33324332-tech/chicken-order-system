@@ -1,0 +1,8 @@
+import { Module } from '@nestjs/common';
+import { AppModule } from './app.module';
+import { OrderApiModule } from './order/order-api.module';
+import { OrderWorkerModule } from './order/order-worker.module';
+import { AdminModule } from './admin/admin.module';
+
+@Module({ imports: [AppModule, OrderApiModule, OrderWorkerModule, AdminModule] })
+export class AppAllModule {}

@@ -1,0 +1,11 @@
+node_modules/
+dist/
+.env
+*.log
+app.log
+app-err.log
+k6-result*.txt
+coverage/
+dump.rdb
+.claude/
+*.lnk
