@@ -187,7 +187,7 @@ export class EcsStack extends cdk.Stack {
     apiSg.addIngressRule(
       ec2.Peer.securityGroupId(alb.connections.securityGroups[0].securityGroupId),
       ec2.Port.tcp(3000),
-      'ALB → API',
+      'ALB to API',
     );
 
     // ─────────────────────────────────────────────────────────────────────

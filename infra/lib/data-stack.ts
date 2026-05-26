@@ -31,8 +31,8 @@ export class DataStack extends cdk.Stack {
 
     // ECS 태스크에서 DB/Redis로 접근 허용 (ECS SG는 EcsStack에서 참조)
     // 여기서는 VPC CIDR 전체 허용 후 EcsStack에서 세분화
-    dbSg.addIngressRule(ec2.Peer.ipv4(vpc.vpcCidrBlock), ec2.Port.tcp(5432), 'ECS → RDS');
-    redisSg.addIngressRule(ec2.Peer.ipv4(vpc.vpcCidrBlock), ec2.Port.tcp(6379), 'ECS → Redis');
+    dbSg.addIngressRule(ec2.Peer.ipv4(vpc.vpcCidrBlock), ec2.Port.tcp(5432), 'ECS to RDS');
+    redisSg.addIngressRule(ec2.Peer.ipv4(vpc.vpcCidrBlock), ec2.Port.tcp(6379), 'ECS to Redis');
 
     // ── RDS PostgreSQL ────────────────────────────────────────────────────
     this.dbSecret = new secretsmanager.Secret(this, 'DbSecret', {
