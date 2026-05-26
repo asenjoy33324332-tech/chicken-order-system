@@ -103,7 +103,7 @@ export class DataStack extends cdk.Stack {
       numCacheClusters: isProd ? 2 : 1,   // Production: Primary + Replica
       cacheNodeType: isProd ? 'cache.r7g.large' : 'cache.t4g.small',
       engine: 'redis',
-      engineVersion: '7.2',
+      engineVersion: '7.1',
       automaticFailoverEnabled: isProd,
       multiAzEnabled: isProd,
       cacheSubnetGroupName: redisSubnetGroup.ref,
