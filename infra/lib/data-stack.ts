@@ -91,10 +91,10 @@ export class DataStack extends cdk.Stack {
 
     const redisParamGroup = new elasticache.CfnParameterGroup(this, 'RedisParamGroup', {
       cacheParameterGroupFamily: 'redis7',
-      description: `order-system-${stage} Redis parameter group (AOF enabled)`,
+      description: `order-system-${stage} Redis parameter group`,
       properties: {
-        appendonly: 'yes',
-        appendfsync: 'everysec',
+        'maxmemory-policy': 'noeviction',
+        'tcp-keepalive': '60',
       },
     });
 
