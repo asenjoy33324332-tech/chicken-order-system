@@ -15,7 +15,7 @@
         { "name": "APP_MODE",              "value": "worker" },
         { "name": "NODE_ENV",              "value": "production" },
         { "name": "DATABASE_NAME",         "value": "orderdb" },
-        { "name": "DB_POOL_MAX",           "value": "20" },
+        { "name": "DB_POOL_MAX",           "value": "5" },
         { "name": "WORKER_CONCURRENCY",    "value": "20" },
         { "name": "WORKER_RATE_LIMIT",     "value": "100" },
         { "name": "CB_FAILURE_THRESHOLD",  "value": "5" },
@@ -32,6 +32,7 @@
         { "name": "DATABASE_PASSWORD", "valueFrom": "/order-system/staging/db:password::" },
         { "name": "REDIS_HOST",        "valueFrom": "/order-system/staging/redis:endpoint::" }
       ],
+      "stopTimeout": 90,
       "logConfiguration": {
         "logDriver": "awslogs",
         "options": {

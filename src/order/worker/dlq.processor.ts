@@ -3,6 +3,7 @@ import { Job } from 'bullmq';
 import { DLQ_QUEUE_NAME } from '../infrastructure/queue/order-queue.service';
 import { AppLogger } from '../../common/logger/logger.service';
 import { runWithTrace } from '../../common/trace/trace.context';
+import { NotificationService } from '../../notification/notification.service';
 
 interface DlqJobPayload {
   orderId: string;
@@ -18,7 +19,10 @@ interface DlqJobPayload {
  */
 @Processor(DLQ_QUEUE_NAME, { concurrency: 2 })
 export class DlqProcessor extends WorkerHost {
-  constructor(private readonly logger: AppLogger) {
+  constructor(
+    private readonly logger: AppLogger,
+    private readonly notification: NotificationService,
+  ) {
     super();
   }
 
@@ -32,6 +36,8 @@ export class DlqProcessor extends WorkerHost {
         attempts,
         jobId: job.id,
       });
+
+      await this.notification.sendDlqAlert({ orderId, traceId, storeId, reason: failureReason, attempts });
       // DLQ job은 성공으로 ack 처리
       // (무한 재처리 방지 — 운영자가 /admin API로 수동 재처리)
     });

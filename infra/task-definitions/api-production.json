@@ -32,6 +32,7 @@
         { "name": "DATABASE_PASSWORD", "valueFrom": "/order-system/production/db:password::" },
         { "name": "REDIS_HOST",        "valueFrom": "/order-system/production/redis:endpoint::" }
       ],
+      "stopTimeout": 90,
       "healthCheck": {
         "command": ["CMD-SHELL", "wget -qO- http://localhost:3000/admin/health || exit 1"],
         "interval": 30,

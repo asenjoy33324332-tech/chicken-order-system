@@ -89,21 +89,33 @@ export class DataStack extends cdk.Stack {
       subnetIds: vpc.privateSubnets.map((s) => s.subnetId),
     });
 
+    const redisParamGroup = new elasticache.CfnParameterGroup(this, 'RedisParamGroup', {
+      cacheParameterGroupFamily: 'redis7',
+      description: `order-system-${stage} Redis parameter group (AOF enabled)`,
+      properties: {
+        appendonly: 'yes',
+        appendfsync: 'everysec',
+      },
+    });
+
     const redisCluster = new elasticache.CfnReplicationGroup(this, 'Redis', {
       replicationGroupDescription: `order-system-${stage}`,
       numCacheClusters: isProd ? 2 : 1,   // Production: Primary + Replica
       cacheNodeType: isProd ? 'cache.r7g.large' : 'cache.t4g.small',
       engine: 'redis',
-      engineVersion: '7.1',
+      engineVersion: '7.2',
       automaticFailoverEnabled: isProd,
       multiAzEnabled: isProd,
       cacheSubnetGroupName: redisSubnetGroup.ref,
+      cacheParameterGroupName: redisParamGroup.ref,
       securityGroupIds: [redisSg.securityGroupId],
       atRestEncryptionEnabled: true,
       transitEncryptionEnabled: true,
       snapshotRetentionLimit: isProd ? 5 : 0,
+      snapshotWindow: '03:00-04:00',
     });
     redisCluster.addDependency(redisSubnetGroup);
+    redisCluster.addDependency(redisParamGroup);
 
     this.redisEndpoint = redisCluster.attrPrimaryEndPointAddress;
     this.redisPort = 6379;

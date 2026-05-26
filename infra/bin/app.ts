@@ -22,7 +22,7 @@ const ecr = new EcrStack(app, 'OrderSystem-ECR', { env });
 const iam = new IamStack(app, 'OrderSystem-IAM', {
   env,
   ecrArn: ecr.repository.repositoryArn,
-  githubOrg: 'YOUR_GITHUB_ORG',      // ← 실제 GitHub 계정/조직명으로 변경
+  githubOrg: 'asenjoy33324332-tech',
   githubRepo: 'chicken-order-system', // ← 실제 레포 이름으로 변경
 });
 

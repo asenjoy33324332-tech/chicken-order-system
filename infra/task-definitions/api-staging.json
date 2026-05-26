@@ -17,7 +17,7 @@
         { "name": "PORT",                  "value": "3000" },
         { "name": "NODE_ENV",              "value": "production" },
         { "name": "DATABASE_NAME",         "value": "orderdb" },
-        { "name": "DB_POOL_MAX",           "value": "30" },
+        { "name": "DB_POOL_MAX",           "value": "5" },
         { "name": "CB_FAILURE_THRESHOLD",  "value": "5" },
         { "name": "CB_OPEN_DURATION_MS",   "value": "30000" },
         { "name": "MAX_RETRY_ATTEMPTS",    "value": "3" },
@@ -32,6 +32,7 @@
         { "name": "DATABASE_PASSWORD", "valueFrom": "/order-system/staging/db:password::" },
         { "name": "REDIS_HOST",        "valueFrom": "/order-system/staging/redis:endpoint::" }
       ],
+      "stopTimeout": 90,
       "healthCheck": {
         "command": ["CMD-SHELL", "wget -qO- http://localhost:3000/admin/health || exit 1"],
         "interval": 30,
