@@ -51,7 +51,7 @@ export class DataStack extends cdk.Stack {
       }),
       instanceType: isProd
         ? ec2.InstanceType.of(ec2.InstanceClass.R7G, ec2.InstanceSize.XLARGE)
-        : ec2.InstanceType.of(ec2.InstanceClass.T4G, ec2.InstanceSize.MEDIUM),
+        : ec2.InstanceType.of(ec2.InstanceClass.T4G, ec2.InstanceSize.MICRO),
       vpc,
       vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },
       securityGroups: [dbSg],
@@ -101,7 +101,7 @@ export class DataStack extends cdk.Stack {
     const redisCluster = new elasticache.CfnReplicationGroup(this, 'Redis', {
       replicationGroupDescription: `order-system-${stage}`,
       numCacheClusters: isProd ? 2 : 1,   // Production: Primary + Replica
-      cacheNodeType: isProd ? 'cache.r7g.large' : 'cache.t4g.small',
+      cacheNodeType: isProd ? 'cache.r7g.large' : 'cache.t3.micro',
       engine: 'redis',
       engineVersion: '7.1',
       automaticFailoverEnabled: isProd,
