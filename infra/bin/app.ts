@@ -15,18 +15,17 @@ const env   = {
   region:  process.env.CDK_DEFAULT_REGION ?? 'ap-northeast-2',
 };
 
-// â”€â”€ ECR (ê³µìœ : staging/production ë™ì¼ ë ˆí¬) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ?€?€ ECR (ê³µìœ : staging/production ?™ì¼ ?ˆí¬) ?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€
 const ecr = new EcrStack(app, 'OrderSystem-ECR', { env });
 
-// â”€â”€ IAM (GitHub OIDC ë¡¤) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ?€?€ IAM (GitHub OIDC ë¡? ?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€
 const iam = new IamStack(app, 'OrderSystem-IAM', {
   env,
   ecrArn: ecr.repository.repositoryArn,
   githubOrg: 'asenjoy33324332-tech',
-  githubRepo: 'chicken-order-system', // â† ì‹¤ì œ ë ˆí¬ ì´ë¦„ìœ¼ë¡œ ë³€ê²½
-});
+  githubRepo: 'chicken-order-system', // ???¤ì œ ?ˆí¬ ?´ë¦„?¼ë¡œ ë³€ê²?});
 
-// â”€â”€ Staging â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ?€?€ Staging ?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€
 const stagingNetwork = new NetworkStack(app, 'OrderSystem-Staging-Network', { env, stage: 'staging' });
 const stagingData    = new DataStack(app, 'OrderSystem-Staging-Data', {
   env, stage: 'staging', vpc: stagingNetwork.vpc,
@@ -42,7 +41,7 @@ new EcsStack(app, 'OrderSystem-Staging-ECS', {
   workerTaskCount: 1,
 });
 
-// â”€â”€ Production â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// ?€?€ Production ?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€?€
 const prodNetwork = new NetworkStack(app, 'OrderSystem-Prod-Network', { env, stage: 'production' });
 const prodData    = new DataStack(app, 'OrderSystem-Prod-Data', {
   env, stage: 'production', vpc: prodNetwork.vpc,
