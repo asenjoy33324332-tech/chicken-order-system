@@ -23,5 +23,6 @@
       "@admin/*": ["src/admin/*"],
       "@config/*": ["src/config/*"]
     }
-  }
+  },
+  "exclude": ["node_modules", "infra", "dist"]
 }
