@@ -4,18 +4,20 @@
   "requiresCompatibilities": ["FARGATE"],
   "cpu": "1024",
   "memory": "2048",
-  "executionRoleArn": "arn:aws:iam::ACCOUNT_ID:role/order-system-staging-ExecutionRole",
-  "taskRoleArn":      "arn:aws:iam::ACCOUNT_ID:role/order-system-staging-TaskRole",
+  "executionRoleArn": "arn:aws:iam::610628048855:role/OrderSystem-Staging-ECS-ExecutionRole605A040B-kFaVzDIV5j3E",
+  "taskRoleArn":      "arn:aws:iam::610628048855:role/OrderSystem-Staging-ECS-TaskRole30FC0FBB-TK0uRblBiJuy",
   "containerDefinitions": [
     {
       "name": "worker",
-      "image": "ACCOUNT_ID.dkr.ecr.REGION.amazonaws.com/chicken-order-system:staging",
+      "image": "610628048855.dkr.ecr.ap-northeast-2.amazonaws.com/chicken-order-system:staging",
       "essential": true,
       "environment": [
         { "name": "APP_MODE",              "value": "worker" },
         { "name": "NODE_ENV",              "value": "production" },
         { "name": "DATABASE_NAME",         "value": "orderdb" },
         { "name": "DB_POOL_MAX",           "value": "5" },
+        { "name": "REDIS_HOST",            "value": "master.orrzzly465ccg5g.nhdrbw.apn2.cache.amazonaws.com" },
+        { "name": "REDIS_PORT",            "value": "6379" },
         { "name": "WORKER_CONCURRENCY",    "value": "20" },
         { "name": "WORKER_RATE_LIMIT",     "value": "100" },
         { "name": "CB_FAILURE_THRESHOLD",  "value": "5" },
@@ -26,11 +28,10 @@
         { "name": "IDEMPOTENCY_TTL_SECONDS", "value": "86400" }
       ],
       "secrets": [
-        { "name": "DATABASE_HOST",     "valueFrom": "/order-system/staging/db:host::" },
-        { "name": "DATABASE_PORT",     "valueFrom": "/order-system/staging/db:port::" },
-        { "name": "DATABASE_USER",     "valueFrom": "/order-system/staging/db:username::" },
-        { "name": "DATABASE_PASSWORD", "valueFrom": "/order-system/staging/db:password::" },
-        { "name": "REDIS_HOST",        "valueFrom": "/order-system/staging/redis:endpoint::" }
+        { "name": "DATABASE_HOST",     "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:610628048855:secret:/order-system/staging/db-rK9Rfz:host::" },
+        { "name": "DATABASE_PORT",     "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:610628048855:secret:/order-system/staging/db-rK9Rfz:port::" },
+        { "name": "DATABASE_USER",     "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:610628048855:secret:/order-system/staging/db-rK9Rfz:username::" },
+        { "name": "DATABASE_PASSWORD", "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:610628048855:secret:/order-system/staging/db-rK9Rfz:password::" }
       ],
       "stopTimeout": 90,
       "logConfiguration": {
