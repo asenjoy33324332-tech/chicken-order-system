@@ -34,6 +34,7 @@ import { MenuEntity } from './order/domain/entities/menu.entity';
         ],
         synchronize: false,    // 절대 true 금지 (운영 환경 스키마 파괴 위험)
         logging: process.env.NODE_ENV !== 'production',
+        ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
         extra: {
           max: parseInt(process.env.DB_POOL_MAX || '30', 10),
           idleTimeoutMillis: 30000,
