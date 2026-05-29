@@ -7,6 +7,7 @@ import { ORDERS_QUEUE_NAME, DLQ_QUEUE_NAME, OrderQueueService } from './infrastr
 import { ProcessOrderService } from './application/process-order.service';
 import { OrderProcessor } from './worker/order.processor';
 import { DlqProcessor } from './worker/dlq.processor';
+import { QueueMetricsService } from './infrastructure/metrics/queue-metrics.service';
 import { NotificationModule } from '../notification/notification.module';
 
 @Module({
@@ -50,6 +51,7 @@ import { NotificationModule } from '../notification/notification.module';
     ProcessOrderService,
     OrderProcessor,
     DlqProcessor,
+    QueueMetricsService,
   ],
 })
 export class OrderWorkerModule {}

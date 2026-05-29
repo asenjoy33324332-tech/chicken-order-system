@@ -164,6 +164,23 @@ export class AlarmStack extends cdk.Stack {
       treatMissingData:   cloudwatch.TreatMissingData.NOT_BREACHING,
     }));
 
+    // ── 6. BullMQ 대기 큐 > 500 ─────────────────────────────────────────
+    addAlarm(new cloudwatch.Alarm(this, 'QueueDepthAlarm', {
+      alarmName:          `order-${stage}-queue-depth-high`,
+      alarmDescription:   'BullMQ 대기 큐 500개 초과 — Worker 처리 지연',
+      metric: new cloudwatch.Metric({
+        namespace:     'OrderSystem/Queue',
+        metricName:    'WaitingJobCount',
+        dimensionsMap: { Stage: stage, QueueName: 'orders-main' },
+        statistic:     'Maximum',
+        period:        cdk.Duration.minutes(1),
+      }),
+      threshold:          500,
+      evaluationPeriods:  2,
+      comparisonOperator: cloudwatch.ComparisonOperator.GREATER_THAN_THRESHOLD,
+      treatMissingData:   cloudwatch.TreatMissingData.NOT_BREACHING,
+    }));
+
     // ── Outputs ───────────────────────────────────────────────────────────
     new cdk.CfnOutput(this, 'AlarmTopicArn', { value: alarmTopic.topicArn });
   }

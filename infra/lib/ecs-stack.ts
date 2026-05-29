@@ -1,10 +1,12 @@
-import * as cdk        from 'aws-cdk-lib';
-import * as ec2         from 'aws-cdk-lib/aws-ec2';
-import * as ecs         from 'aws-cdk-lib/aws-ecs';
-import * as ecr         from 'aws-cdk-lib/aws-ecr';
-import * as elbv2       from 'aws-cdk-lib/aws-elasticloadbalancingv2';
-import * as iam         from 'aws-cdk-lib/aws-iam';
-import * as logs        from 'aws-cdk-lib/aws-logs';
+import * as cdk          from 'aws-cdk-lib';
+import * as ec2           from 'aws-cdk-lib/aws-ec2';
+import * as ecs           from 'aws-cdk-lib/aws-ecs';
+import * as ecr           from 'aws-cdk-lib/aws-ecr';
+import * as elbv2         from 'aws-cdk-lib/aws-elasticloadbalancingv2';
+import * as iam           from 'aws-cdk-lib/aws-iam';
+import * as logs          from 'aws-cdk-lib/aws-logs';
+import * as cloudwatch    from 'aws-cdk-lib/aws-cloudwatch';
+import * as autoscaling   from 'aws-cdk-lib/aws-autoscaling';
 import * as secretsmanager from 'aws-cdk-lib/aws-secretsmanager';
 import { Construct } from 'constructs';
 
@@ -248,16 +250,30 @@ export class EcsStack extends cdk.Stack {
       enableExecuteCommand: true,
     });
 
-    // Worker Auto-scaling (큐 기반은 CloudWatch Custom Metric 필요, CPU로 대체)
+    // Worker Auto-scaling — BullMQ 큐 깊이(WaitingJobCount) 기반
     const workerService = this.workerService;
     const workerScaling = workerService.autoScaleTaskCount({
       minCapacity: workerTaskCount,
       maxCapacity: isProd ? 30 : 3,
     });
-    workerScaling.scaleOnCpuUtilization('WorkerCpuScaling', {
-      targetUtilizationPercent: 60,
-      scaleInCooldown:  cdk.Duration.seconds(600),
-      scaleOutCooldown: cdk.Duration.seconds(60),
+
+    const queueDepthMetric = new cloudwatch.Metric({
+      namespace:     'OrderSystem/Queue',
+      metricName:    'WaitingJobCount',
+      dimensionsMap: { Stage: stage, QueueName: 'orders-main' },
+      statistic:     'Maximum',
+      period:        cdk.Duration.minutes(1),
+    });
+
+    workerScaling.scaleOnMetric('QueueDepthScaling', {
+      metric: queueDepthMetric,
+      scalingSteps: [
+        { upper: 10,  change: -1 },  // 대기 10 미만 → 1대 축소
+        { lower: 100, change: +2 },  // 대기 100 이상 → 2대 증설
+        { lower: 500, change: +5 },  // 대기 500 이상 → 5대 증설
+      ],
+      adjustmentType: autoscaling.AdjustmentType.CHANGE_IN_CAPACITY,
+      cooldown: cdk.Duration.seconds(isProd ? 300 : 60),
     });
 
     // ── Outputs ───────────────────────────────────────────────────────────
