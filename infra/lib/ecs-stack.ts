@@ -20,6 +20,10 @@ interface Props extends cdk.StackProps {
 }
 
 export class EcsStack extends cdk.Stack {
+  public readonly alb: elbv2.ApplicationLoadBalancer;
+  public readonly apiService: ecs.FargateService;
+  public readonly workerService: ecs.FargateService;
+
   constructor(scope: Construct, id: string, props: Props) {
     super(scope, id, props);
 
@@ -132,7 +136,7 @@ export class EcsStack extends cdk.Stack {
       vpc, description: 'ECS API service',
     });
 
-    const apiService = new ecs.FargateService(this, 'ApiService', {
+    this.apiService = new ecs.FargateService(this, 'ApiService', {
       cluster,
       taskDefinition: apiTaskDef,
       desiredCount: apiTaskCount,
@@ -141,6 +145,8 @@ export class EcsStack extends cdk.Stack {
       circuitBreaker: { rollback: true },
       enableExecuteCommand: true,
     });
+
+    const apiService = this.apiService;
 
     // API Auto-scaling
     const apiScaling = apiService.autoScaleTaskCount({
@@ -157,12 +163,13 @@ export class EcsStack extends cdk.Stack {
     });
 
     // ── ALB ───────────────────────────────────────────────────────────────
-    const alb = new elbv2.ApplicationLoadBalancer(this, 'Alb', {
+    this.alb = new elbv2.ApplicationLoadBalancer(this, 'Alb', {
       vpc,
       internetFacing: true,
       loadBalancerName: `order-${stage}`,
     });
 
+    const alb = this.alb;
     const listener = alb.addListener('Http', {
       port: 80,
       // Production에서는 HTTPS 리스너 추가 필요 (ACM 인증서)
@@ -231,7 +238,7 @@ export class EcsStack extends cdk.Stack {
       vpc, description: 'ECS Worker service (no inbound)',
     });
 
-    const workerService = new ecs.FargateService(this, 'WorkerService', {
+    this.workerService = new ecs.FargateService(this, 'WorkerService', {
       cluster,
       taskDefinition: workerTaskDef,
       desiredCount: workerTaskCount,
@@ -242,6 +249,7 @@ export class EcsStack extends cdk.Stack {
     });
 
     // Worker Auto-scaling (큐 기반은 CloudWatch Custom Metric 필요, CPU로 대체)
+    const workerService = this.workerService;
     const workerScaling = workerService.autoScaleTaskCount({
       minCapacity: workerTaskCount,
       maxCapacity: isProd ? 30 : 3,

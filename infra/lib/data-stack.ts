@@ -12,6 +12,7 @@ interface Props extends cdk.StackProps {
 
 export class DataStack extends cdk.Stack {
   public readonly dbSecret: secretsmanager.Secret;
+  public readonly dbInstance: rds.DatabaseInstance;
   public readonly redisEndpoint: string;
   public readonly redisPort: number;
 
@@ -45,7 +46,7 @@ export class DataStack extends cdk.Stack {
       },
     });
 
-    const dbInstance = new rds.DatabaseInstance(this, 'Db', {
+    this.dbInstance = new rds.DatabaseInstance(this, 'Db', {
       engine: rds.DatabaseInstanceEngine.postgres({
         version: rds.PostgresEngineVersion.VER_15,
       }),
@@ -73,6 +74,7 @@ export class DataStack extends cdk.Stack {
     });
 
     // Production: Read Replica
+    const dbInstance = this.dbInstance;
     if (isProd) {
       new rds.DatabaseInstanceReadReplica(this, 'DbReadReplica', {
         sourceDatabaseInstance: dbInstance,
