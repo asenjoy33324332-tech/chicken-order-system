@@ -25,7 +25,8 @@
         { "name": "MAX_RETRY_ATTEMPTS",    "value": "3" },
         { "name": "RETRY_BASE_DELAY_MS",   "value": "1000" },
         { "name": "LOCK_TTL_SECONDS",      "value": "60" },
-        { "name": "IDEMPOTENCY_TTL_SECONDS", "value": "86400" }
+        { "name": "IDEMPOTENCY_TTL_SECONDS", "value": "86400" },
+        { "name": "ADMIN_BASE_URL",          "value": "http://order-staging-357198196.ap-northeast-2.elb.amazonaws.com" }
       ],
       "secrets": [
         { "name": "DATABASE_HOST",     "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:610628048855:secret:/order-system/staging/db-rK9Rfz:host::" },

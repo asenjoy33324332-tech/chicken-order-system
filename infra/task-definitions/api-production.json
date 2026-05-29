@@ -4,12 +4,12 @@
   "requiresCompatibilities": ["FARGATE"],
   "cpu": "512",
   "memory": "1024",
-  "executionRoleArn": "arn:aws:iam::ACCOUNT_ID:role/order-system-production-ExecutionRole",
-  "taskRoleArn":      "arn:aws:iam::ACCOUNT_ID:role/order-system-production-TaskRole",
+  "executionRoleArn": "arn:aws:iam::610628048855:role/OrderSystem-Prod-ECS-ExecutionRole605A040B-8Vq6D2cPjI4r",
+  "taskRoleArn":      "arn:aws:iam::610628048855:role/OrderSystem-Prod-ECS-TaskRole30FC0FBB-GvwVyhTyjWVm",
   "containerDefinitions": [
     {
       "name": "api",
-      "image": "ACCOUNT_ID.dkr.ecr.REGION.amazonaws.com/chicken-order-system:latest",
+      "image": "610628048855.dkr.ecr.ap-northeast-2.amazonaws.com/chicken-order-system:latest",
       "essential": true,
       "portMappings": [{ "containerPort": 3000, "protocol": "tcp" }],
       "environment": [
@@ -23,14 +23,16 @@
         { "name": "MAX_RETRY_ATTEMPTS",    "value": "3" },
         { "name": "RETRY_BASE_DELAY_MS",   "value": "1000" },
         { "name": "LOCK_TTL_SECONDS",      "value": "60" },
-        { "name": "IDEMPOTENCY_TTL_SECONDS", "value": "86400" }
+        { "name": "IDEMPOTENCY_TTL_SECONDS", "value": "86400" },
+        { "name": "REDIS_HOST",              "value": "master.orr1lp1tae0wbd2q.nhdrbw.apn2.cache.amazonaws.com" },
+        { "name": "REDIS_PORT",              "value": "6379" },
+        { "name": "ADMIN_BASE_URL",          "value": "http://order-production-1043936651.ap-northeast-2.elb.amazonaws.com" }
       ],
       "secrets": [
-        { "name": "DATABASE_HOST",     "valueFrom": "/order-system/production/db:host::" },
-        { "name": "DATABASE_PORT",     "valueFrom": "/order-system/production/db:port::" },
-        { "name": "DATABASE_USER",     "valueFrom": "/order-system/production/db:username::" },
-        { "name": "DATABASE_PASSWORD", "valueFrom": "/order-system/production/db:password::" },
-        { "name": "REDIS_HOST",        "valueFrom": "/order-system/production/redis:endpoint::" }
+        { "name": "DATABASE_HOST",     "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:610628048855:secret:/order-system/production/db-YTBSpp:host::" },
+        { "name": "DATABASE_PORT",     "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:610628048855:secret:/order-system/production/db-YTBSpp:port::" },
+        { "name": "DATABASE_USER",     "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:610628048855:secret:/order-system/production/db-YTBSpp:username::" },
+        { "name": "DATABASE_PASSWORD", "valueFrom": "arn:aws:secretsmanager:ap-northeast-2:610628048855:secret:/order-system/production/db-YTBSpp:password::" }
       ],
       "stopTimeout": 90,
       "healthCheck": {

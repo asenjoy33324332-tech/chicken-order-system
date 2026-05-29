@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
 import { OrderRepository } from '../infrastructure/repositories/order.repository';
@@ -26,6 +27,7 @@ export class ProcessOrderService {
     private readonly queue: OrderQueueService,
     private readonly notification: NotificationService,
     private readonly logger: AppLogger,
+    private readonly config: ConfigService,
     @InjectDataSource() private readonly ds: DataSource,
   ) {}
 
@@ -236,7 +238,7 @@ export class ProcessOrderService {
       storeId,
       reason: error.message,
       attempts: jobMeta.attemptsMade,
-      dashboardUrl: `http://localhost:3000/admin/orders/${orderId}`,
+      dashboardUrl: `${this.config.get<string>('adminBaseUrl')}/admin/orders/${orderId}`,
     });
 
     this.logger.error({

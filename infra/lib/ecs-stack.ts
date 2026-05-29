@@ -139,10 +139,7 @@ export class EcsStack extends cdk.Stack {
       securityGroups: [apiSg],
       vpcSubnets: { subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS },
       circuitBreaker: { rollback: true },
-      enableExecuteCommand: true,   // ECS Exec (디버그용)
-      deploymentController: isProd
-        ? { type: ecs.DeploymentControllerType.CODE_DEPLOY }
-        : { type: ecs.DeploymentControllerType.ECS },
+      enableExecuteCommand: true,
     });
 
     // API Auto-scaling

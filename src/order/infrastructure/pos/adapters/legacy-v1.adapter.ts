@@ -64,7 +64,7 @@ export class LegacyV1PosAdapter implements PosAdapter {
           `<MENU_CODE>${item.menuId}</MENU_CODE>` +
           `<QTY>${item.quantity}</QTY>` +
           // 레거시 POS는 금액을 '전' 단위로 처리 (1원 = 100전)
-          `<PRICE>${Math.round(parseFloat(item.unitPrice) * 100)}</PRICE>` +
+          `<PRICE>${Math.round(item.unitPrice * 100)}</PRICE>` +
           `</ITEM>`,
       )
       .join('');

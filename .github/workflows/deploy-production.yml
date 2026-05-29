@@ -2,7 +2,7 @@ name: Deploy — Production
 
 on:
   push:
-    branches: [main]
+    branches: [master]
 
 env:
   AWS_REGION: ${{ secrets.AWS_REGION }}
@@ -67,9 +67,6 @@ jobs:
           service: ${{ secrets.ECS_SERVICE_API_PRODUCTION }}
           cluster: ${{ env.ECS_CLUSTER }}
           wait-for-service-stability: true
-          codedeploy-appspec: infra/appspec-api.yml         # Blue/Green
-          codedeploy-application: OrderSystem-Production
-          codedeploy-deployment-group: OrderSystem-API-Production
 
       # ── Worker 서비스 배포 ─────────────────────────────────────
       - name: Update ECS Worker task definition

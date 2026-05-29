@@ -22,8 +22,14 @@ export class OrderItemEntity {
   @Column({ name: 'menu_name', length: 255 })
   menuName: string;
 
-  @Column({ name: 'unit_price', type: 'numeric', precision: 10, scale: 2 })
-  unitPrice: string;
+  @Column({
+    name: 'unit_price',
+    type: 'numeric',
+    precision: 10,
+    scale: 2,
+    transformer: { to: (v: number) => v, from: (v: string) => parseFloat(v) },
+  })
+  unitPrice: number;
 
   @Column({ type: 'int' })
   quantity: number;

@@ -1,7 +1,7 @@
 export interface DomainOrderItem {
   menuId: string;
   menuName: string;
-  unitPrice: string;
+  unitPrice: number;
   quantity: number;
 }
 

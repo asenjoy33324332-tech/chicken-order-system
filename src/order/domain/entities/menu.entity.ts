@@ -19,8 +19,14 @@ export class MenuEntity {
   @Column({ length: 255 })
   name: string;
 
-  @Column({ name: 'unit_price', type: 'numeric', precision: 10, scale: 2 })
-  unitPrice: string;
+  @Column({
+    name: 'unit_price',
+    type: 'numeric',
+    precision: 10,
+    scale: 2,
+    transformer: { to: (v: number) => v, from: (v: string) => parseFloat(v) },
+  })
+  unitPrice: number;
 
   @Column({ name: 'is_available', default: true })
   isAvailable: boolean;

@@ -37,4 +37,6 @@ export default () => ({
     webhookUrl: process.env.SLACK_WEBHOOK_URL || '',
     alertChannel: process.env.SLACK_ALERT_CHANNEL || '#order-failures',
   },
+
+  adminBaseUrl: process.env.ADMIN_BASE_URL || 'http://localhost:3000',
 });

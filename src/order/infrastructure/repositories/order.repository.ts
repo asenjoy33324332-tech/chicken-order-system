@@ -18,7 +18,7 @@ export interface CreateOrderParams {
   items: Array<{
     menuId: string;
     menuName: string;
-    unitPrice: string;
+    unitPrice: number;
     quantity: number;
   }>;
   workerId: string;
@@ -238,7 +238,7 @@ export class OrderRepository {
   async findMenusByIds(
     menuIds: string[],
     storeId: string,
-  ): Promise<Array<{ id: string; name: string; unitPrice: string; isAvailable: boolean }>> {
+  ): Promise<Array<{ id: string; name: string; unitPrice: number; isAvailable: boolean }>> {
     if (menuIds.length === 0) return [];
     const rows = await this.ds.query(
       `SELECT id, name, unit_price, is_available
@@ -250,7 +250,7 @@ export class OrderRepository {
     return rows.map((r: Record<string, unknown>) => ({
       id: r['id'] as string,
       name: r['name'] as string,
-      unitPrice: r['unit_price'] as string,
+      unitPrice: parseFloat(r['unit_price'] as string),
       isAvailable: r['is_available'] as boolean,
     }));
   }

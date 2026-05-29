@@ -17,7 +17,7 @@ export interface OrderJobPayload {
   items: Array<{
     menuId: string;
     menuName: string;
-    unitPrice: string;
+    unitPrice: number;
     quantity: number;
   }>;
   isRedrive?: boolean;

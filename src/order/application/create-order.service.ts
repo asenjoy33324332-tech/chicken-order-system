@@ -113,10 +113,10 @@ export class CreateOrderService {
   private async getMenusCached(
     menuIds: string[],
     storeId: string,
-  ): Promise<Array<{ id: string; name: string; unitPrice: string; isAvailable: boolean }>> {
+  ): Promise<Array<{ id: string; name: string; unitPrice: number; isAvailable: boolean }>> {
     const cacheKey = `menu:${storeId}:${[...menuIds].sort().join(',')}`;
     const cached = await this.redis.get(cacheKey);
-    if (cached) return JSON.parse(cached) as Array<{ id: string; name: string; unitPrice: string; isAvailable: boolean }>;
+    if (cached) return JSON.parse(cached) as Array<{ id: string; name: string; unitPrice: number; isAvailable: boolean }>;
 
     const menus = await this.orderRepo.findMenusByIds(menuIds, storeId);
     await this.redis.set(cacheKey, JSON.stringify(menus), 'EX', MENU_CACHE_TTL_SECONDS);
