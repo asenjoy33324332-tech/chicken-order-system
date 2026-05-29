@@ -66,9 +66,20 @@ export class DataStack extends cdk.Stack {
       parameterGroup: new rds.ParameterGroup(this, 'DbParamGroup', {
         engine: rds.DatabaseInstanceEngine.postgres({ version: rds.PostgresEngineVersion.VER_15 }),
         parameters: {
-          'statement_timeout':      '5000',   // 5초 쿼리 타임아웃
+          // ── 쿼리 타임아웃 ────────────────────────────────────────────
+          'statement_timeout':                   '5000',
           'idle_in_transaction_session_timeout': '30000',
-          'log_min_duration_statement': '1000', // 1초 이상 쿼리 로그
+          'log_min_duration_statement':          '1000',
+
+          // ── Autovacuum 글로벌 튜닝 ───────────────────────────────────
+          // orders 테이블은 주문당 UPDATE 3회 발생 → dead tuple 빠르게 누적
+          // 기본값(scale_factor=0.2)은 20% dead tuple 이후 vacuum → 너무 늦음
+          'autovacuum_vacuum_scale_factor':   '0.01',  // 기본 0.2 → 1% 변경 시 vacuum
+          'autovacuum_analyze_scale_factor':  '0.005', // 기본 0.1 → 0.5% 변경 시 analyze
+          'autovacuum_vacuum_cost_delay':     '2',     // 기본 20ms → 더 자주 실행
+          'autovacuum_max_workers':           '5',     // 기본 3 → 동시 vacuum 워커 증가 (재부팅 필요)
+          'autovacuum_vacuum_threshold':      '50',    // 최소 50행 dead tuple 이후 시작
+          'autovacuum_analyze_threshold':     '50',
         },
       }),
     });
