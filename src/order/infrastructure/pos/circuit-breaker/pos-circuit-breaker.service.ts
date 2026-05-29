@@ -11,7 +11,7 @@ import {
 } from 'cockatiel';
 import Redis from 'ioredis';
 import { CircuitBreakerOpenError } from '../../../domain/errors/order.errors';
-import { REDIS_CLIENT } from '../../idempotency/idempotency.service';
+import { CACHE_REDIS } from '../../redis/redis.tokens';
 import { AppLogger } from '../../../../common/logger/logger.service';
 
 type CircuitPolicy = ReturnType<typeof wrap>;
@@ -27,7 +27,7 @@ export class PosCircuitBreakerService {
   private readonly openDurationMs: number;
 
   constructor(
-    @Inject(REDIS_CLIENT) private readonly redis: Redis,
+    @Inject(CACHE_REDIS) private readonly redis: Redis,
     private readonly config: ConfigService,
     private readonly logger: AppLogger,
   ) {

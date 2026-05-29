@@ -13,6 +13,10 @@ export default () => ({
   redis: {
     host: process.env.REDIS_HOST || 'localhost',
     port: parseInt(process.env.REDIS_PORT || '6379', 10),
+    // 역할별 DB 분리 (BullMQ는 DB 0 사용)
+    idempotencyDb: parseInt(process.env.REDIS_IDEMPOTENCY_DB || '1', 10),
+    lockDb:        parseInt(process.env.REDIS_LOCK_DB        || '2', 10),
+    cacheDb:       parseInt(process.env.REDIS_CACHE_DB       || '3', 10),
   },
 
   circuitBreaker: {

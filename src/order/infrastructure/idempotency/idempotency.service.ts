@@ -1,8 +1,7 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
-
-const REDIS_CLIENT = 'REDIS_CLIENT';
+import { IDEMPOTENCY_REDIS } from '../redis/redis.tokens';
 
 export interface IdempotencyEntry {
   orderId: string;
@@ -15,7 +14,7 @@ export class IdempotencyService {
   private readonly ttl: number;
 
   constructor(
-    @Inject(REDIS_CLIENT) private readonly redis: Redis,
+    @Inject(IDEMPOTENCY_REDIS) private readonly redis: Redis,
     private readonly config: ConfigService,
   ) {
     this.ttl = this.config.get<number>('idempotency.ttlSeconds', 86400);
@@ -75,5 +74,3 @@ export class IdempotencyService {
     return `idempotency:${key}:response`;
   }
 }
-
-export { REDIS_CLIENT };

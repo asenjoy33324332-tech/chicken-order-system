@@ -1,7 +1,7 @@
 import { Injectable, Inject } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
-import { REDIS_CLIENT } from '../idempotency/idempotency.service';
+import { LOCK_REDIS } from '../redis/redis.tokens';
 import { LockAcquisitionError } from '../../domain/errors/order.errors';
 
 const RELEASE_SCRIPT = `
@@ -17,7 +17,7 @@ export class DistributedLockService {
   private readonly ttl: number;
 
   constructor(
-    @Inject(REDIS_CLIENT) private readonly redis: Redis,
+    @Inject(LOCK_REDIS) private readonly redis: Redis,
     private readonly config: ConfigService,
   ) {
     this.ttl = this.config.get<number>('lock.ttlSeconds', 60);

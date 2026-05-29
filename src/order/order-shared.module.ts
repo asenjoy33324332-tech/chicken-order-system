@@ -12,11 +12,24 @@ import { OrderStateTransitionEntity } from './domain/entities/order-state-transi
 import { StoreEntity } from './domain/entities/store.entity';
 import { MenuEntity } from './domain/entities/menu.entity';
 import { OrderRepository } from './infrastructure/repositories/order.repository';
-import { IdempotencyService, REDIS_CLIENT } from './infrastructure/idempotency/idempotency.service';
+import { IdempotencyService } from './infrastructure/idempotency/idempotency.service';
 import { DistributedLockService } from './infrastructure/lock/distributed-lock.service';
 import { PosCircuitBreakerService } from './infrastructure/pos/circuit-breaker/pos-circuit-breaker.service';
 import { PosAdapterFactory } from './infrastructure/pos/pos-adapter.factory';
 import { AppLogger } from '../common/logger/logger.service';
+import { IDEMPOTENCY_REDIS, LOCK_REDIS, CACHE_REDIS } from './infrastructure/redis/redis.tokens';
+
+const makeRedisProvider = (token: string, dbKey: string) => ({
+  provide: token,
+  inject: [ConfigService],
+  useFactory: (config: ConfigService) =>
+    new Redis({
+      host: config.get<string>('redis.host', 'localhost'),
+      port: config.get<number>('redis.port', 6379),
+      db:   config.get<number>(dbKey, 0),
+      maxRetriesPerRequest: null,
+    }),
+});
 
 @Module({
   imports: [
@@ -29,16 +42,9 @@ import { AppLogger } from '../common/logger/logger.service';
     ]),
   ],
   providers: [
-    {
-      provide: REDIS_CLIENT,
-      inject: [ConfigService],
-      useFactory: (config: ConfigService) =>
-        new Redis({
-          host: config.get<string>('redis.host', 'localhost'),
-          port: config.get<number>('redis.port', 6379),
-          maxRetriesPerRequest: null,
-        }),
-    },
+    makeRedisProvider(IDEMPOTENCY_REDIS, 'redis.idempotencyDb'),
+    makeRedisProvider(LOCK_REDIS,        'redis.lockDb'),
+    makeRedisProvider(CACHE_REDIS,       'redis.cacheDb'),
     OrderRepository,
     IdempotencyService,
     DistributedLockService,
@@ -47,7 +53,9 @@ import { AppLogger } from '../common/logger/logger.service';
     AppLogger,
   ],
   exports: [
-    REDIS_CLIENT,
+    IDEMPOTENCY_REDIS,
+    LOCK_REDIS,
+    CACHE_REDIS,
     OrderRepository,
     IdempotencyService,
     DistributedLockService,

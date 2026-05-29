@@ -2,7 +2,8 @@ import { Injectable, ConflictException, UnprocessableEntityException, ServiceUna
 import { v4 as uuidv4 } from 'uuid';
 import Decimal from 'decimal.js';
 import Redis from 'ioredis';
-import { IdempotencyService, REDIS_CLIENT } from '../infrastructure/idempotency/idempotency.service';
+import { IdempotencyService } from '../infrastructure/idempotency/idempotency.service';
+import { CACHE_REDIS } from '../infrastructure/redis/redis.tokens';
 import { OrderQueueService, OrderJobPayload } from '../infrastructure/queue/order-queue.service';
 import { OrderRepository } from '../infrastructure/repositories/order.repository';
 import { AppLogger } from '../../common/logger/logger.service';
@@ -33,7 +34,7 @@ export class CreateOrderService {
     private readonly queue: OrderQueueService,
     private readonly orderRepo: OrderRepository,
     private readonly logger: AppLogger,
-    @Inject(REDIS_CLIENT) private readonly redis: Redis,
+    @Inject(CACHE_REDIS) private readonly redis: Redis,
   ) {}
 
   async execute(cmd: CreateOrderCommand): Promise<CreateOrderResult> {
