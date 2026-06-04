@@ -20,8 +20,10 @@ import { NotificationModule } from '../notification/notification.module';
         inject: [ConfigService],
         useFactory: (config: ConfigService) => ({
           connection: {
-            host: config.get<string>('redis.host', 'localhost'),
-            port: config.get<number>('redis.port', 6379),
+            host:     config.get<string>('redis.host', 'localhost'),
+            port:     config.get<number>('redis.port', 6379),
+            password: config.get<string>('redis.password') || undefined,
+            tls:      config.get<boolean>('redis.tls', false) ? {} : undefined,
           },
           defaultJobOptions: {
             attempts: config.get<number>('retry.maxAttempts', 3),
@@ -39,8 +41,10 @@ import { NotificationModule } from '../notification/notification.module';
         inject: [ConfigService],
         useFactory: (config: ConfigService) => ({
           connection: {
-            host: config.get<string>('redis.host', 'localhost'),
-            port: config.get<number>('redis.port', 6379),
+            host:     config.get<string>('redis.host', 'localhost'),
+            port:     config.get<number>('redis.port', 6379),
+            password: config.get<string>('redis.password') || undefined,
+            tls:      config.get<boolean>('redis.tls', false) ? {} : undefined,
           },
         }),
       },

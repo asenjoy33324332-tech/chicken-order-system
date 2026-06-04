@@ -1,0 +1,67 @@
+services:
+  - type: web
+    name: chicken-order-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    region: singapore
+    plan: free
+
+    healthCheckPath: /admin/health
+
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: APP_MODE
+        value: all
+      - key: PORT
+        value: 3000
+
+      # Worker 설정
+      - key: WORKER_CONCURRENCY
+        value: 5
+      - key: WORKER_RATE_LIMIT
+        value: 30
+
+      # 서킷 브레이커 / 재시도
+      - key: CB_FAILURE_THRESHOLD
+        value: 5
+      - key: CB_OPEN_DURATION_MS
+        value: 30000
+      - key: MAX_RETRY_ATTEMPTS
+        value: 3
+      - key: RETRY_BASE_DELAY_MS
+        value: 1000
+      - key: LOCK_TTL_SECONDS
+        value: 60
+      - key: IDEMPOTENCY_TTL_SECONDS
+        value: 86400
+
+      # --- Render 대시보드에서 직접 입력 (Secret) ---
+      - key: DATABASE_URL
+        sync: false
+      - key: DATABASE_HOST
+        sync: false
+      - key: DATABASE_PORT
+        sync: false
+      - key: DATABASE_USER
+        sync: false
+      - key: DATABASE_PASSWORD
+        sync: false
+      - key: DATABASE_NAME
+        sync: false
+      - key: DB_POOL_MAX
+        value: 10
+
+      - key: REDIS_HOST
+        sync: false
+      - key: REDIS_PORT
+        value: 6379
+      - key: REDIS_PASSWORD
+        sync: false
+      - key: REDIS_TLS
+        value: true
+
+      - key: UPSTASH_REDIS_REST_URL
+        sync: false
+      - key: UPSTASH_REDIS_REST_TOKEN
+        sync: false

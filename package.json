@@ -3,9 +3,9 @@
   "version": "1.0.0",
   "description": "차세대 프랜차이즈 통합 주문 시스템",
   "scripts": {
-    "start:api": "APP_MODE=api nest start --watch",
-    "start:worker": "APP_MODE=worker nest start --watch",
-    "start:all": "APP_MODE=all nest start --watch",
+    "start:api": "cross-env APP_MODE=api nest start --watch",
+    "start:worker": "cross-env APP_MODE=worker nest start --watch",
+    "start:all": "cross-env APP_MODE=all nest start --watch",
     "build": "nest build",
     "migration:run": "ts-node -r tsconfig-paths/register ./node_modules/.bin/typeorm migration:run -d src/database/data-source.ts",
     "migration:revert": "ts-node -r tsconfig-paths/register ./node_modules/.bin/typeorm migration:revert -d src/database/data-source.ts",
@@ -45,6 +45,7 @@
     "@types/node": "^20.11.5",
     "@types/pg": "^8.10.9",
     "@types/uuid": "^9.0.7",
+    "cross-env": "^10.1.0",
     "ts-node": "^10.9.2",
     "tsconfig-paths": "^4.2.0",
     "typescript": "^5.3.3"
