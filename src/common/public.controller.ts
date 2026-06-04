@@ -134,6 +134,41 @@ export class PublicController {
     };
   }
 
+  // 전체 지역 목록 (앱 지역 선택 화면용)
+  @Get('areas')
+  async getAreas() {
+    const rows = await this.ds.query<Array<{
+      id: string; name: string; store_id: string; sort_order: number;
+    }>>(
+      `SELECT a.id, a.name, a.store_id, a.sort_order
+         FROM areas a
+        WHERE a.is_active = TRUE
+        ORDER BY a.store_id, a.sort_order`,
+    );
+    return {
+      ok: true,
+      areas: rows.map((r) => ({
+        id: r.id,
+        name: r.name,
+        storeId: r.store_id,
+        sortOrder: r.sort_order,
+      })),
+    };
+  }
+
+  // 특정 지역 조회 (storeId 반환)
+  @Get('areas/:id')
+  async getArea(@Param('id') id: string) {
+    const rows = await this.ds.query<Array<{
+      id: string; name: string; store_id: string;
+    }>>(
+      `SELECT id, name, store_id FROM areas WHERE id = $1 AND is_active = TRUE`,
+      [id],
+    );
+    if (!rows.length) return { ok: false, message: '지역 없음' };
+    return { ok: true, id: rows[0].id, name: rows[0].name, storeId: rows[0].store_id };
+  }
+
   // 주문 상태 조회 (BBQ GET /order-status/:id 호환)
   @Get('order-status/:id')
   async getOrderStatus(@Param('id') id: string) {
