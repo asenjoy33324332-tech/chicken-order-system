@@ -6,6 +6,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigService } from '@nestjs/config';
 import Redis from 'ioredis';
+import { buildRedisOptions } from './infrastructure/redis/redis-connection.factory';
 import { OrderEntity } from './domain/entities/order.entity';
 import { OrderItemEntity } from './domain/entities/order-item.entity';
 import { OrderStateTransitionEntity } from './domain/entities/order-state-transition.entity';
@@ -25,25 +26,14 @@ const makeRedisProvider = (token: string, keyPrefix: string) => ({
   provide: token,
   inject: [ConfigService],
   useFactory: (config: ConfigService) => {
-    const redisUrl = process.env.REDIS_URL;
-    const options = {
+    const client = new Redis({
+      ...buildRedisOptions(),
       keyPrefix,
       maxRetriesPerRequest: null,
       retryStrategy: (times: number) => Math.min(times * 200, 2000),
       reconnectOnError: (err: Error & { code?: string }) =>
         err.code === 'ECONNRESET' || (err.message?.includes('READONLY') ?? false),
-    };
-
-    // rediss:// URL 직접 사용 시 TLS가 자동 설정됨 (Upstash 권장 방식)
-    const client = redisUrl
-      ? new Redis(redisUrl, options)
-      : new Redis({
-          host:     config.get<string>('redis.host', 'localhost'),
-          port:     config.get<number>('redis.port', 6379),
-          password: config.get<string>('redis.password') || undefined,
-          tls:      config.get<boolean>('redis.tls', false) ? { rejectUnauthorized: false } : undefined,
-          ...options,
-        });
+    });
 
     // "Unhandled error event" 스팸 방지 — transient 에러는 ioredis가 자동 재연결
     client.on('error', (err: Error & { code?: string }) => {

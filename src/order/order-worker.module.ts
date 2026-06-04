@@ -1,8 +1,8 @@
 /** Worker 서버 전용 모듈 — Queue 소비 + 상태 머신 + DB Write + POS 연동 */
 import { Module } from '@nestjs/common';
 import { BullModule } from '@nestjs/bullmq';
-import { ConfigService } from '@nestjs/config';
 import { OrderSharedModule } from './order-shared.module';
+import { buildRedisOptions } from './infrastructure/redis/redis-connection.factory';
 import { ORDERS_QUEUE_NAME, DLQ_QUEUE_NAME, OrderQueueService } from './infrastructure/queue/order-queue.service';
 import { ProcessOrderService } from './application/process-order.service';
 import { OrderProcessor } from './worker/order.processor';
@@ -14,40 +14,21 @@ import { NotificationModule } from '../notification/notification.module';
   imports: [
     OrderSharedModule,
     NotificationModule,
-    BullModule.registerQueueAsync(
+    BullModule.registerQueue(
       {
         name: ORDERS_QUEUE_NAME,
-        inject: [ConfigService],
-        useFactory: (config: ConfigService) => ({
-          connection: {
-            host:     config.get<string>('redis.host', 'localhost'),
-            port:     config.get<number>('redis.port', 6379),
-            password: config.get<string>('redis.password') || undefined,
-            tls:      config.get<boolean>('redis.tls', false) ? {} : undefined,
+        connection: buildRedisOptions(),
+        defaultJobOptions: {
+          attempts: parseInt(process.env.MAX_RETRY_ATTEMPTS || '3', 10),
+          backoff: {
+            type: 'exponential',
+            delay: parseInt(process.env.RETRY_BASE_DELAY_MS || '1000', 10),
           },
-          defaultJobOptions: {
-            attempts: config.get<number>('retry.maxAttempts', 3),
-            backoff: {
-              type: 'exponential',
-              delay: config.get<number>('retry.baseDelayMs', 1000),
-            },
-            removeOnComplete: { count: 1000 },
-            removeOnFail: false,
-          },
-        }),
+          removeOnComplete: { count: 1000 },
+          removeOnFail: false,
+        },
       },
-      {
-        name: DLQ_QUEUE_NAME,
-        inject: [ConfigService],
-        useFactory: (config: ConfigService) => ({
-          connection: {
-            host:     config.get<string>('redis.host', 'localhost'),
-            port:     config.get<number>('redis.port', 6379),
-            password: config.get<string>('redis.password') || undefined,
-            tls:      config.get<boolean>('redis.tls', false) ? {} : undefined,
-          },
-        }),
-      },
+      { name: DLQ_QUEUE_NAME, connection: buildRedisOptions() },
     ),
   ],
   providers: [
