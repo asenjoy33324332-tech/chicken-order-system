@@ -28,9 +28,14 @@ const makeRedisProvider = (token: string, keyPrefix: string) => ({
       host:     config.get<string>('redis.host', 'localhost'),
       port:     config.get<number>('redis.port', 6379),
       password: config.get<string>('redis.password') || undefined,
-      tls:      tls ? {} : undefined,
+      tls:      tls ? { rejectUnauthorized: false } : undefined,
       keyPrefix,
       maxRetriesPerRequest: null,
+      reconnectOnError: (err) => {
+        // Upstash가 유휴 연결을 끊을 때 자동 재연결
+        return err.message.includes('EPIPE') || err.message.includes('READONLY');
+      },
+      retryStrategy: (times) => Math.min(times * 200, 2000),
     });
   },
 });
