@@ -1,6 +1,10 @@
 node_modules/
 dist/
 .env
+scripts/check-db.js
+scripts/run-migrations.js
+scripts/migrate-areas.js
+scripts/migrate-005.js
 .env.*
 Dockerfile.dev
 *.log
