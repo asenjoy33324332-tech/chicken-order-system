@@ -36,8 +36,6 @@ async function bootstrap(): Promise<void> {
     }),
   );
 
-  app.enableShutdownHooks();
-
   const port = parseInt(process.env.PORT || '3000', 10);
 
   if (mode === 'worker') {
@@ -48,7 +46,8 @@ async function bootstrap(): Promise<void> {
     logger.info({ event: 'SERVER_STARTED', mode, port, pid: process.pid });
   }
 
-  // Graceful shutdown (k8s/ECS SIGTERM)
+  // enableShutdownHooks()와 중복 등록 시 app.close()가 두 번 호출되어
+  // "Called end on pool more than once" 발생 → enableShutdownHooks 제거, 수동 핸들러만 유지
   process.on('SIGTERM', async () => {
     logger.info({ event: 'GRACEFUL_SHUTDOWN_START' });
     await app.close();
