@@ -19,6 +19,7 @@ import { PosCircuitBreakerService } from './infrastructure/pos/circuit-breaker/p
 import { PosAdapterFactory } from './infrastructure/pos/pos-adapter.factory';
 import { AppLogger } from '../common/logger/logger.service';
 import { IDEMPOTENCY_REDIS, LOCK_REDIS, CACHE_REDIS } from './infrastructure/redis/redis.tokens';
+import { OrderGateway } from './infrastructure/socket/order.gateway';
 
 const TRANSIENT_ERRORS = new Set(['ECONNRESET', 'EPIPE', 'ENOTFOUND', 'ETIMEDOUT']);
 
@@ -63,6 +64,7 @@ const makeRedisProvider = (token: string, keyPrefix: string) => ({
     PosCircuitBreakerService,
     PosAdapterFactory,
     AppLogger,
+    OrderGateway,
   ],
   exports: [
     IDEMPOTENCY_REDIS,
@@ -74,6 +76,7 @@ const makeRedisProvider = (token: string, keyPrefix: string) => ({
     PosCircuitBreakerService,
     PosAdapterFactory,
     AppLogger,
+    OrderGateway,
   ],
 })
 export class OrderSharedModule {}

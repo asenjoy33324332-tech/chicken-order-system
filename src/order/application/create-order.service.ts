@@ -9,6 +9,7 @@ import { OrderRepository } from '../infrastructure/repositories/order.repository
 import { AppLogger } from '../../common/logger/logger.service';
 import { getTraceContext } from '../../common/trace/trace.context';
 import { AmountMismatchError, MenuNotFoundError, MenuUnavailableError } from '../domain/errors/order.errors';
+import { OrderGateway } from '../infrastructure/socket/order.gateway';
 
 const MENU_CACHE_TTL_SECONDS = 300;
 
@@ -34,6 +35,7 @@ export class CreateOrderService {
     private readonly queue: OrderQueueService,
     private readonly orderRepo: OrderRepository,
     private readonly logger: AppLogger,
+    private readonly gateway: OrderGateway,
     @Inject(CACHE_REDIS) private readonly redis: Redis,
   ) {}
 
@@ -82,7 +84,18 @@ export class CreateOrderService {
 
       await this.queue.publishOrder(payload);
 
-      // ─── Step 4: 응답 캐시 및 반환 ───────────────────────────
+      // ─── Step 4: POS 실시간 알림 ─────────────────────────────
+      this.gateway.emitNewOrder(cmd.storeId, {
+        id: orderId,
+        storeId: cmd.storeId,
+        status: 'QUEUED',
+        items: enrichedItems,
+        totalAmount: calculatedAmount,
+        traceId: payload.traceId,
+        createdAt: new Date().toISOString(),
+      });
+
+      // ─── Step 5: 응답 캐시 및 반환 ───────────────────────────
       const result: CreateOrderResult = {
         orderId,
         traceId: traceId ?? uuidv4(),
