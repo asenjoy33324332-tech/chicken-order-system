@@ -7,6 +7,7 @@ import { OrderQueueService, ORDERS_QUEUE_NAME, DLQ_QUEUE_NAME } from './infrastr
 import { CreateOrderService } from './application/create-order.service';
 import { OrderController } from './api/order.controller';
 import { InternalBridgeController } from './api/internal-bridge.controller';
+import { PublicController } from '../common/public.controller';
 
 @Module({
   imports: [
@@ -17,6 +18,6 @@ import { InternalBridgeController } from './api/internal-bridge.controller';
     ),
   ],
   providers: [OrderQueueService, CreateOrderService],
-  controllers: [OrderController, InternalBridgeController],
+  controllers: [OrderController, InternalBridgeController, PublicController],
 })
 export class OrderApiModule {}

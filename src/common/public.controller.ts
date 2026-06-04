@@ -1,6 +1,10 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import {
+  Controller, Get, Post, Param, Query, Body, HttpCode, HttpStatus,
+} from '@nestjs/common';
 import { InjectDataSource } from '@nestjs/typeorm';
 import { DataSource } from 'typeorm';
+import { CreateOrderService } from '../order/application/create-order.service';
+import { v4 as uuidv4 } from 'uuid';
 
 /**
  * Flutter 앱이 공통으로 사용하는 공개 엔드포인트.
@@ -8,15 +12,18 @@ import { DataSource } from 'typeorm';
  */
 @Controller()
 export class PublicController {
-  constructor(@InjectDataSource() private readonly ds: DataSource) {}
+  constructor(
+    @InjectDataSource() private readonly ds: DataSource,
+    private readonly createOrder: CreateOrderService,
+  ) {}
 
-  // BBQ 앱 호환 헬스체크 경로
+  // BBQ 앱 호환 헬스체크
   @Get('health')
   health() {
     return { status: 'ok', timestamp: new Date().toISOString() };
   }
 
-  // 매장 메뉴 목록 (BBQ의 GET /menus?app=order 와 호환)
+  // 매장 메뉴 목록 (BBQ GET /menus?app=order 호환)
   @Get('menus')
   async getMenus(@Query('storeId') storeId?: string) {
     if (!storeId) return { ok: false, menus: [] };
@@ -39,19 +46,102 @@ export class PublicController {
         isAvailable: r.is_available,
         category: '치킨',
         appTarget: 'all',
+        optionTemplateIds: [],
       })),
     };
   }
 
-  // BBQ 앱 호환 주문 상태 조회
+  // 빈 카테고리/옵션 응답 (앱 크래시 방지)
+  @Get('categories')
+  getCategories() {
+    return { ok: true, categories: [] };
+  }
+
+  @Get('options')
+  getOptions() {
+    return { ok: true, options: [] };
+  }
+
+  // 매장 기본 설정 (BBQ GET /settings 호환)
+  @Get('settings')
+  async getSettings(@Query('storeId') storeId?: string) {
+    return {
+      ok: true,
+      isOpen: true,
+      businessPaused: false,
+      minOrderAmount: 0,
+      storeNotice: '',
+      deliveryGuide: '',
+    };
+  }
+
+  // POS 주문 목록 조회 (BBQ GET /orders 호환)
+  @Get('orders')
+  async getOrders(@Query('storeId') storeId?: string) {
+    if (!storeId) return { ok: false, orders: [] };
+    const rows = await this.ds.query<Array<{
+      id: string; status: string; store_id: string; trace_id: string;
+      requested_amount: string; calculated_amount: string;
+      created_at: Date; updated_at: Date; queued_at: Date;
+    }>>(
+      `SELECT o.id, o.status, o.store_id, o.trace_id,
+              o.requested_amount, o.calculated_amount,
+              o.created_at, o.updated_at, o.queued_at
+         FROM orders o
+        WHERE o.store_id = $1
+          AND o.created_at > NOW() - INTERVAL '24 hours'
+        ORDER BY o.created_at DESC
+        LIMIT 100`,
+      [storeId],
+    );
+
+    const orderIds = rows.map((r) => r.id);
+    let itemMap: Map<string, Array<{ menu_name: string; unit_price: string; quantity: number }>> = new Map();
+
+    if (orderIds.length > 0) {
+      const items = await this.ds.query<Array<{
+        order_id: string; menu_name: string; unit_price: string; quantity: number;
+      }>>(
+        `SELECT order_id, menu_name, unit_price, quantity
+           FROM order_items
+          WHERE order_id = ANY($1)`,
+        [orderIds],
+      );
+      for (const item of items) {
+        if (!itemMap.has(item.order_id)) itemMap.set(item.order_id, []);
+        itemMap.get(item.order_id)!.push(item);
+      }
+    }
+
+    return {
+      ok: true,
+      orders: rows.map((o) => ({
+        id: o.id,
+        orderNo: o.id.slice(0, 8).toUpperCase(),
+        status: this.mapStatus(o.status),
+        storeId: o.store_id,
+        total: parseFloat(o.calculated_amount),
+        amount: parseFloat(o.calculated_amount),
+        type: 'delivery',
+        createdAt: o.created_at,
+        orderedAt: o.queued_at || o.created_at,
+        items: (itemMap.get(o.id) ?? []).map((i) => ({
+          name: i.menu_name,
+          price: parseFloat(i.unit_price),
+          quantity: i.quantity,
+        })),
+      })),
+    };
+  }
+
+  // 주문 상태 조회 (BBQ GET /order-status/:id 호환)
   @Get('order-status/:id')
   async getOrderStatus(@Param('id') id: string) {
     const rows = await this.ds.query<Array<{
       id: string; status: string; store_id: string;
       created_at: Date; updated_at: Date;
     }>>(
-      `SELECT id, status, store_id, created_at, updated_at
-         FROM orders WHERE id = $1`,
+      `SELECT id, status, store_id, created_at, updated_at FROM orders WHERE id = $1`,
       [id],
     );
     if (!rows.length) return { ok: false, message: '주문 없음' };
@@ -59,10 +149,53 @@ export class PublicController {
     return {
       ok: true,
       id: o.id,
-      status: o.status,
+      status: this.mapStatus(o.status),
       storeId: o.store_id,
       createdAt: o.created_at,
       updatedAt: o.updated_at,
     };
+  }
+
+  // BBQ 앱 호환 주문 생성 (POST /order)
+  @Post('order')
+  @HttpCode(HttpStatus.ACCEPTED)
+  async createOrderCompat(@Body() body: Record<string, unknown>) {
+    const storeId = String(body['storeId'] ?? '');
+    const total   = Number(body['total'] ?? body['amount'] ?? 0);
+    const rawItems = (body['items'] as Array<Record<string, unknown>>) ?? [];
+    const idempotencyKey = String(body['idempotencyKey'] ?? uuidv4());
+
+    const items = rawItems.map((i) => ({
+      menuId: String(i['id'] ?? i['menuId'] ?? ''),
+      quantity: Number(i['quantity'] ?? 1),
+    }));
+
+    const result = await this.createOrder.execute({
+      idempotencyKey,
+      storeId,
+      userId: null,
+      requestedAmount: String(total),
+      items,
+    });
+
+    return {
+      ok: true,
+      id: result.orderId,
+      orderId: result.orderId,
+      status: result.status,
+      replayed: result.replayed,
+    };
+  }
+
+  // NestJS 상태 → BBQ 호환 상태 매핑
+  private mapStatus(status: string): string {
+    const map: Record<string, string> = {
+      QUEUED:      'PLACED',
+      SAVED:       'PLACED',
+      SENT_TO_POS: 'ACCEPTED',
+      COMPLETED:   'DONE',
+      FAILED:      'CANCELLED',
+    };
+    return map[status] ?? status;
   }
 }
