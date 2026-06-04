@@ -28,17 +28,30 @@ export class OrderGateway implements OnGatewayConnection, OnGatewayDisconnect {
     this.logger.info({ event: 'SOCKET_DISCONNECTED', socketId: client.id });
   }
 
-  // POS가 연결 후 매장 룸 입장
+  // POS가 연결 후 매장 룸 입장 (join_store 또는 pos_hello 둘 다 지원)
   @SubscribeMessage('join_store')
   handleJoinStore(
     @MessageBody() data: { storeId: string },
     @ConnectedSocket() client: Socket,
   ) {
-    if (!data?.storeId) return;
-    const room = `store:${data.storeId}`;
+    this.joinStoreRoom(client, data?.storeId);
+  }
+
+  // BBQ POS 앱 호환: pos_hello 이벤트로도 룸 입장
+  @SubscribeMessage('pos_hello')
+  handlePosHello(
+    @MessageBody() data: { storeId: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    this.joinStoreRoom(client, data?.storeId);
+  }
+
+  private joinStoreRoom(client: Socket, storeId?: string) {
+    if (!storeId) return;
+    const room = `store:${storeId}`;
     client.join(room);
-    client.emit('pos_ok', { storeId: data.storeId });
-    this.logger.info({ event: 'POS_JOINED', storeId: data.storeId, socketId: client.id });
+    client.emit('pos_ok', { storeId });
+    this.logger.info({ event: 'POS_JOINED', storeId, socketId: client.id });
   }
 
   // 새 주문 → 해당 매장 POS에 emit

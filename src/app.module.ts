@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { PublicController } from './common/public.controller';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import configuration from './config/configuration';
@@ -46,5 +47,7 @@ import { MenuEntity } from './order/domain/entities/menu.entity';
       }),
     }),
   ],
+  controllers: [PublicController],
 })
 export class AppModule {}
+
