@@ -19,24 +19,40 @@ import { PosAdapterFactory } from './infrastructure/pos/pos-adapter.factory';
 import { AppLogger } from '../common/logger/logger.service';
 import { IDEMPOTENCY_REDIS, LOCK_REDIS, CACHE_REDIS } from './infrastructure/redis/redis.tokens';
 
+const TRANSIENT_ERRORS = new Set(['ECONNRESET', 'EPIPE', 'ENOTFOUND', 'ETIMEDOUT']);
+
 const makeRedisProvider = (token: string, keyPrefix: string) => ({
   provide: token,
   inject: [ConfigService],
   useFactory: (config: ConfigService) => {
-    const tls = config.get<boolean>('redis.tls', false);
-    return new Redis({
-      host:     config.get<string>('redis.host', 'localhost'),
-      port:     config.get<number>('redis.port', 6379),
-      password: config.get<string>('redis.password') || undefined,
-      tls:      tls ? { rejectUnauthorized: false } : undefined,
+    const redisUrl = process.env.REDIS_URL;
+    const options = {
       keyPrefix,
       maxRetriesPerRequest: null,
-      reconnectOnError: (err) => {
-        // Upstash가 유휴 연결을 끊을 때 자동 재연결
-        return err.message.includes('EPIPE') || err.message.includes('READONLY');
-      },
-      retryStrategy: (times) => Math.min(times * 200, 2000),
+      retryStrategy: (times: number) => Math.min(times * 200, 2000),
+      reconnectOnError: (err: Error & { code?: string }) =>
+        err.code === 'ECONNRESET' || (err.message?.includes('READONLY') ?? false),
+    };
+
+    // rediss:// URL 직접 사용 시 TLS가 자동 설정됨 (Upstash 권장 방식)
+    const client = redisUrl
+      ? new Redis(redisUrl, options)
+      : new Redis({
+          host:     config.get<string>('redis.host', 'localhost'),
+          port:     config.get<number>('redis.port', 6379),
+          password: config.get<string>('redis.password') || undefined,
+          tls:      config.get<boolean>('redis.tls', false) ? { rejectUnauthorized: false } : undefined,
+          ...options,
+        });
+
+    // "Unhandled error event" 스팸 방지 — transient 에러는 ioredis가 자동 재연결
+    client.on('error', (err: Error & { code?: string }) => {
+      if (!TRANSIENT_ERRORS.has(err.code ?? '')) {
+        console.error('[Redis] fatal error:', err.message);
+      }
     });
+
+    return client;
   },
 });
 
