@@ -30,9 +30,6 @@ const makeRedisProvider = (token: string, keyPrefix: string) => ({
       ...buildRedisOptions(),
       keyPrefix,
       maxRetriesPerRequest: null,
-      retryStrategy: (times: number) => Math.min(times * 200, 2000),
-      reconnectOnError: (err: Error & { code?: string }) =>
-        err.code === 'ECONNRESET' || (err.message?.includes('READONLY') ?? false),
     });
 
     // "Unhandled error event" 스팸 방지 — transient 에러는 ioredis가 자동 재연결
