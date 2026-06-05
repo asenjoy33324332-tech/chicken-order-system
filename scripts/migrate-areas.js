@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 const client = new Client({
-  connectionString: 'postgresql://neondb_owner:npg_gVdCaKD1Z0jN@ep-patient-cake-ao9m9jrk.c-2.ap-southeast-1.aws.neon.tech/neondb?sslmode=require'
+  connectionString: process.env.DATABASE_URL
 });
 
 async function run() {
