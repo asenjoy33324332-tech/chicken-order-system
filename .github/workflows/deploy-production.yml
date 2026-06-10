@@ -19,6 +19,9 @@ jobs:
       id-token: write
       contents: read
 
+    env:
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
     steps:
       - uses: actions/checkout@v4
 
@@ -87,7 +90,7 @@ jobs:
 
       # ── Slack 알림 ─────────────────────────────────────────────
       - name: Slack — 배포 성공
-        if: success() && secrets.SLACK_WEBHOOK_URL != ''
+        if: success() && env.SLACK_WEBHOOK_URL != ''
         uses: slackapi/slack-github-action@v1
         with:
           payload: |
@@ -98,7 +101,7 @@ jobs:
           SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
 
       - name: Slack — 배포 실패
-        if: failure() && secrets.SLACK_WEBHOOK_URL != ''
+        if: failure() && env.SLACK_WEBHOOK_URL != ''
         uses: slackapi/slack-github-action@v1
         with:
           payload: |
