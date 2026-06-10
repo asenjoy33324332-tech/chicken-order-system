@@ -197,6 +197,14 @@ export class PublicController {
   async createOrderCompat(@Body() body: Record<string, unknown>) {
     const storeId = String(body['storeId'] ?? '');
     const total   = Number(body['total'] ?? body['amount'] ?? 0);
+
+    if (!storeId) {
+      return { ok: false, message: 'storeId가 필요합니다.' };
+    }
+    if (total <= 0) {
+      return { ok: false, message: '유효한 주문 금액이 필요합니다.' };
+    }
+
     const rawItems = (body['items'] as Array<Record<string, unknown>>) ?? [];
     const idempotencyKey = String(body['idempotencyKey'] ?? uuidv4());
 
@@ -222,6 +230,30 @@ export class PublicController {
     };
   }
 
+  // 배너 목록 (BBQ 앱 호환 — 현재 미운영, 빈 배열 반환)
+  @Get('banners')
+  getBanners() {
+    return { ok: true, banners: [] };
+  }
+
+  // 스플래시 / 로고 이미지 URL (BBQ 앱 호환 — 현재 미운영)
+  @Get('splash/:target')
+  getSplash() {
+    return { ok: true, imageUrl: null };
+  }
+
+  // 닉네임 중복 확인 (BBQ 앱 호환 — 현재 미운영)
+  @Get('customers/check')
+  getCustomersCheck() {
+    return { ok: true, exists: false };
+  }
+
+  // 배달비 조회 (BBQ 앱 호환 — 고정값 반환)
+  @Get('delivery-fee')
+  getDeliveryFee() {
+    return { ok: true, fee: 2000 };
+  }
+
   // NestJS 상태 → BBQ 호환 상태 매핑
   private mapStatus(status: string): string {
     const map: Record<string, string> = {
@@ -230,6 +262,10 @@ export class PublicController {
       SENT_TO_POS: 'ACCEPTED',
       COMPLETED:   'DONE',
       FAILED:      'CANCELLED',
+      ACCEPTED:    'ACCEPTED',
+      COOKING:     'ACCEPTED',
+      DONE:        'DONE',
+      CANCELLED:   'CANCELLED',
     };
     return map[status] ?? status;
   }

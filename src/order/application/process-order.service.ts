@@ -181,7 +181,7 @@ export class ProcessOrderService {
 
     await runWithTrace({ traceId, orderId, storeId }, async () => {
       const isRetryable = !(error instanceof BusinessLogicError);
-      const isExhausted = jobMeta.attemptsMade >= 3;
+      const isExhausted = jobMeta.attemptsMade >= 2;
 
       if (!isRetryable || isExhausted) {
         await this.moveToDlq(payload, error, jobMeta);

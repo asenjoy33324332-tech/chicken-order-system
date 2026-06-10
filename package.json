@@ -7,8 +7,6 @@
     "start:worker": "cross-env APP_MODE=worker nest start --watch",
     "start:all": "cross-env APP_MODE=all nest start --watch",
     "build": "nest build",
-    "migration:run": "ts-node -r tsconfig-paths/register ./node_modules/.bin/typeorm migration:run -d src/database/data-source.ts",
-    "migration:revert": "ts-node -r tsconfig-paths/register ./node_modules/.bin/typeorm migration:revert -d src/database/data-source.ts",
     "db:init": "psql $DATABASE_URL -f database/migrations/001_initial_schema.sql",
     "test": "jest",
     "test:e2e": "jest --config ./test/jest-e2e.json"

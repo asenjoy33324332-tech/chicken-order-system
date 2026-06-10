@@ -152,7 +152,7 @@ export class OrderRepository {
         extraClauses.push(`, pos_error_message = $${paramIdx++}`);
         queryValues.push(params.posErrorMessage);
       }
-      if (params.reason?.includes('FAILED')) {
+      if (params.reason) {
         extraClauses.push(`, failure_reason = $${paramIdx++}`);
         queryValues.push(params.reason);
       }
