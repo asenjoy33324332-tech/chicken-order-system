@@ -26,7 +26,14 @@ export class PublicController {
   // 매장 메뉴 목록 (BBQ GET /menus?app=order 호환)
   @Get('menus')
   async getMenus(@Query('storeId') storeId?: string) {
-    if (!storeId) return { ok: false, menus: [] };
+    let resolvedStoreId = storeId;
+    if (!resolvedStoreId) {
+      const stores = await this.ds.query<Array<{ id: string }>>(
+        `SELECT id FROM stores WHERE is_active = TRUE ORDER BY created_at LIMIT 1`,
+      );
+      if (!stores.length) return { ok: false, menus: [] };
+      resolvedStoreId = stores[0].id;
+    }
     const rows = await this.ds.query<Array<{
       id: string; name: string; unit_price: string; is_available: boolean;
     }>>(
@@ -34,7 +41,7 @@ export class PublicController {
          FROM menus
         WHERE store_id = $1 AND is_available = TRUE
         ORDER BY name`,
-      [storeId],
+      [resolvedStoreId],
     );
     return {
       ok: true,
@@ -153,6 +160,39 @@ export class PublicController {
         storeId: r.store_id,
         sortOrder: r.sort_order,
       })),
+    };
+  }
+
+  // 주소 기반 담당 점포 자동 조회
+  @Get('areas/resolve')
+  async resolveArea(
+    @Query('address') address?: string,
+    @Query('type') type?: string,
+  ) {
+    if (type === 'takeout' || !address?.trim()) {
+      const stores = await this.ds.query<Array<{ id: string; name: string }>>(
+        `SELECT id, name FROM stores WHERE is_active = TRUE ORDER BY created_at LIMIT 1`,
+      );
+      if (!stores.length) return { ok: false, message: '영업 중인 매장이 없습니다.' };
+      return { ok: true, storeId: stores[0].id, storeName: stores[0].name, areaName: '' };
+    }
+    const rows = await this.ds.query<Array<{
+      id: string; name: string; store_id: string; store_name: string;
+    }>>(
+      `SELECT a.id, a.name, a.store_id, s.name as store_name
+         FROM areas a
+         JOIN stores s ON s.id = a.store_id
+        WHERE a.is_active = TRUE
+        ORDER BY a.sort_order, a.name`,
+    );
+    const trimmed = address.trim();
+    const matched = rows.find((r) => trimmed.includes(r.name));
+    if (!matched) return { ok: false, message: '배달 가능 지역이 아닙니다.' };
+    return {
+      ok: true,
+      storeId: matched.store_id,
+      storeName: matched.store_name,
+      areaName: matched.name,
     };
   }
 

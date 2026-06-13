@@ -41,32 +41,47 @@
 
 ### ⏳ 남은 작업 (우선순위 순)
 
-#### 1. POS 배포 — 가게 PC에 복사 (즉시 가능)
-- `Release` 폴더 전체를 가게 PC에 복사 (`exe` 단독 실행 불가, 폴더 통째로 필요)
-- 경로: `bbq_project\bbqpos_like\build\windows\x64\runner\Release\`
-- 가게 PC에서 실행 후 서버 URL / storeId 설정 확인
+#### ~~1. POS 배포 — 가게 PC에 복사~~ ✅ 완료 (2026-06-11)
+- `Release` 폴더 → `치킨POS.zip` (14MB) 으로 압축 후 가게 PC 배포
+- 가게 PC 실행 확인 완료
 
-#### 2. 주문앱 Android APK 빌드 (Android SDK 설치 필요)
-- Android Studio 또는 CLI SDK 설치 필요
-- 빌드 명령:
-  ```powershell
-  cd "C:\치킨 프로젝트\bbq_project\bbq_order_app"
-  flutter pub get
-  flutter build apk --release
-  ```
-- 결과물: `build\app\outputs\flutter-apk\app-release.apk`
+#### ~~2. 주문앱 Android APK 빌드~~ ✅ 완료 (2026-06-11)
+- Android Studio 설치 → SDK 설정 → 라이선스 수락 → 빌드 성공
+- 한국어 경로 문제 해결: `subst Z: "C:\치킨 프로젝트\bbq_project\bbq_order_app"` 후 Z:\에서 빌드
+- 결과물: `bbq_order_app\build\app\outputs\flutter-apk\app-release.apk` (52.3MB)
 
-#### 3. 실제 매장 데이터 입력
-- DB `areas` 테이블에 실제 지역명 INSERT
+#### ~~3. 구역 기반 자동 점포 배정 구현~~ ✅ 완료 (2026-06-14)
+
+**구현 내용:**
+
+| 파일 | 변경 내용 |
+|------|----------|
+| `src/admin/admin.controller.ts` | 구역 관리 HTML UI(`GET /admin/areas`) + CRUD API 4개 추가 |
+| `src/common/public.controller.ts` | `GET /areas/resolve` 엔드포인트 추가 (주소 → storeId 자동 매핑) |
+| `bbq_order_app/lib/screens/cart_screen.dart` | 4곳 수정 (아래 상세) |
+
+**cart_screen.dart 변경 상세:**
+1. `String? _resolvedStoreId;` 상태 변수 추가 (line ~84)
+2. `_buildOrderDraft()` 컴파일 에러 수정: `AppConstants.storeId` → `_resolvedStoreId ?? ''`
+3. `_queryDeliveryFee()`: 배달비 조회 성공 후 `api.resolveArea(address)` 호출 → storeId 저장
+4. `_startKcpPayment()`: 포장이면 `api.resolveArea('', takeout: true)` 동적 조회 / 배달이면 storeId 미확인 시 차단
+
+**`GET /areas/resolve` 동작:**
+- `type=takeout` 또는 address 없음 → `stores` 테이블에서 첫 번째 활성 매장 반환
+- `type=delivery` + address → `areas` 테이블에서 주소에 포함된 지역명 매칭 → 담당 storeId 반환
+- 매칭 실패 → `{ ok: false, message: '배달 가능 지역이 아닙니다.' }`
+
+#### 4. 실제 매장 데이터 입력 ⬅ **다음 작업 시작 지점**
+- DB `areas` 테이블에 실제 지역명 + store_id INSERT
 - DB `stores` 테이블에 실제 매장 추가 (현재: 강남점/홍대점 시드만)
 - 메뉴 데이터 실제 메뉴로 교체
 
-#### 4. end-to-end 운영 테스트
+#### 5. end-to-end 운영 테스트
 - 주문앱 → 서버 → POS 수신 흐름 실 기기 테스트
 - Socket.IO `join_store` / `new_order` 소켓 연결 확인
 - 주문 상태 변경 (ACCEPTED → COOKING → DONE) POS에서 확인
 
-#### 5. Android SDK 설치 (APK 빌드 전제)
+#### 6. Android SDK 설치 (APK 빌드 전제)
 - 설치 방법: Android Studio 설치 or `flutter doctor` 안내 따라 SDK 설치
 - 설치 후 `flutter doctor` 재확인
 
@@ -153,6 +168,21 @@
 - 현재 상태: 모든 리소스 6/8 삭제 완료, 추가 과금 없음
 - AWS Support 크레딧 요청 완료 (케이스 번호: 178093404500592)
 - 기다리는 중
+
+---
+
+---
+
+## 2026-06-11 (세션)
+
+### ✅ 완료
+
+- GitHub Actions 워크플로 오류 수정 (`secrets` → `env` 컨텍스트)
+- MenuAdminModule 등록 완료 (`AppApiModule`, `AppAllModule`)
+- migration-007 실행 완료 (menus 컬럼 추가, menu_categories/menu_options/pos_settings 테이블)
+- POS 가게 PC 배포 완료 (`치킨POS.zip` 14MB)
+- Android APK 빌드 완료 (52.3MB, SUBST Z: 우회 방법 사용)
+- Neon DB 비밀번호 교체 (보안 경고 대응) + Render.com 환경변수 업데이트
 
 ---
 
